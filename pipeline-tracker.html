@@ -1,0 +1,1423 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>MLI EAB Pipeline &amp; Board Tracker</title>
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+            background: #f0f2f5;
+            color: #1a1a2e;
+            min-height: 100vh;
+        }
+
+        header {
+            background: linear-gradient(135deg, #c5050c 0%, #9b0000 100%);
+            color: white;
+            padding: 20px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+        }
+        header h1 { font-size: 22px; font-weight: 700; }
+        header .subtitle { font-size: 13px; opacity: 0.85; margin-top: 2px; }
+        .header-actions { display: flex; gap: 10px; }
+        .header-actions button {
+            background: rgba(255,255,255,0.15);
+            color: white;
+            border: 1px solid rgba(255,255,255,0.3);
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 13px;
+            transition: background 0.2s;
+        }
+        .header-actions button:hover { background: rgba(255,255,255,0.25); }
+
+        .stats-bar {
+            display: flex;
+            gap: 16px;
+            padding: 16px 32px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+        .stat {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        .stat .dot {
+            width: 10px;
+            height: 10px;
+            border-radius: 50%;
+        }
+        .stat .count { font-weight: 700; font-size: 16px; }
+
+        .board-container {
+            display: flex;
+            gap: 16px;
+            padding: 24px 32px;
+            overflow-x: auto;
+            min-height: calc(100vh - 150px);
+            align-items: flex-start;
+        }
+
+        .column {
+            min-width: 280px;
+            max-width: 320px;
+            flex: 1;
+            background: #fff;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            display: flex;
+            flex-direction: column;
+            max-height: calc(100vh - 200px);
+        }
+        .column-header {
+            padding: 16px;
+            border-radius: 12px 12px 0 0;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            position: sticky;
+            top: 0;
+            z-index: 1;
+        }
+        .column-header h2 {
+            font-size: 14px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .column-header .badge {
+            background: rgba(255,255,255,0.3);
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+        .column-header .desc {
+            font-size: 11px;
+            opacity: 0.8;
+            margin-top: 4px;
+            line-height: 1.3;
+        }
+
+        .col-consideration .column-header { background: #6366f1; color: white; }
+        .col-discovery .column-header { background: #f59e0b; color: white; }
+        .col-invitation .column-header { background: #3b82f6; color: white; }
+        .col-accepted .column-header { background: #10b981; color: white; }
+        .col-confirmed .column-header { background: #059669; color: white; }
+        .col-declined .column-header { background: #ef4444; color: white; }
+
+        .column-body {
+            padding: 12px;
+            flex: 1;
+            overflow-y: auto;
+            min-height: 60px;
+        }
+        .column-body.drag-over {
+            background: #f0f7ff;
+            outline: 2px dashed #3b82f6;
+            outline-offset: -4px;
+            border-radius: 0 0 12px 12px;
+        }
+
+        /* Avatars */
+        .avatar {
+            width: 40px;
+            height: 40px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: 700;
+            font-size: 14px;
+            color: white;
+            flex-shrink: 0;
+            text-transform: uppercase;
+            overflow: hidden;
+        }
+        .avatar img {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+        }
+        .avatar-lg {
+            width: 48px;
+            height: 48px;
+            font-size: 16px;
+        }
+        .card-layout {
+            display: flex;
+            gap: 12px;
+            align-items: flex-start;
+        }
+        .card-info { flex: 1; min-width: 0; }
+
+        .card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 14px;
+            margin-bottom: 10px;
+            cursor: grab;
+            transition: box-shadow 0.2s, transform 0.2s;
+            position: relative;
+        }
+        .card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
+        }
+        .card.dragging {
+            opacity: 0.5;
+            transform: rotate(2deg);
+        }
+        .card .name {
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 4px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .card .name a {
+            color: #0a66c2;
+            text-decoration: none;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .card .name a:hover { color: #004182; }
+        .card .title {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 2px;
+        }
+        .card .company {
+            font-size: 13px;
+            color: #9ca3af;
+            font-weight: 500;
+        }
+        .card .card-actions {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .card:hover .card-actions { opacity: 1; }
+        .card-actions button {
+            width: 24px;
+            height: 24px;
+            border: none;
+            background: #f3f4f6;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #6b7280;
+        }
+        .card-actions button:hover { background: #e5e7eb; color: #1f2937; }
+        .card-actions button.delete:hover { background: #fecaca; color: #dc2626; }
+
+        .card .notes {
+            margin-top: 8px;
+            padding-top: 8px;
+            border-top: 1px solid #f3f4f6;
+            font-size: 12px;
+            color: #9ca3af;
+            font-style: italic;
+        }
+
+        .add-card-btn {
+            width: 100%;
+            padding: 10px;
+            border: 2px dashed #d1d5db;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            color: #9ca3af;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+            margin-top: 4px;
+        }
+        .add-card-btn:hover {
+            border-color: #9ca3af;
+            color: #6b7280;
+            background: #f9fafb;
+        }
+
+        /* Modal */
+        .modal-overlay {
+            display: none;
+            position: fixed;
+            inset: 0;
+            background: rgba(0,0,0,0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+        .modal-overlay.active { display: flex; }
+        .modal {
+            background: white;
+            border-radius: 12px;
+            padding: 28px;
+            width: 460px;
+            max-width: 90vw;
+            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        }
+        .modal h3 {
+            font-size: 18px;
+            margin-bottom: 20px;
+        }
+        .modal label {
+            display: block;
+            font-size: 13px;
+            font-weight: 600;
+            margin-bottom: 4px;
+            color: #374151;
+        }
+        .modal input, .modal textarea, .modal select {
+            width: 100%;
+            padding: 10px 12px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+            margin-bottom: 14px;
+            font-family: inherit;
+        }
+        .modal input:focus, .modal textarea:focus, .modal select:focus {
+            outline: none;
+            border-color: #6366f1;
+            box-shadow: 0 0 0 3px rgba(99,102,241,0.1);
+        }
+        .modal textarea { resize: vertical; min-height: 60px; }
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 10px;
+            margin-top: 8px;
+        }
+        .modal-actions button {
+            padding: 10px 20px;
+            border-radius: 6px;
+            font-size: 14px;
+            font-weight: 500;
+            cursor: pointer;
+            border: 1px solid #d1d5db;
+            background: white;
+            transition: all 0.2s;
+        }
+        .modal-actions .btn-primary {
+            background: #c5050c;
+            color: white;
+            border-color: #c5050c;
+        }
+        .modal-actions .btn-primary:hover { background: #a00409; }
+        .modal-actions button:not(.btn-primary):hover { background: #f3f4f6; }
+
+        /* Search */
+        .search-bar {
+            padding: 12px 32px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .search-bar input {
+            flex: 1;
+            max-width: 400px;
+            padding: 8px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .search-bar input:focus { outline: none; border-color: #6366f1; }
+
+        .linkedin-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 18px;
+            height: 18px;
+            flex-shrink: 0;
+            text-decoration: none;
+        }
+        .linkedin-icon svg {
+            width: 18px;
+            height: 18px;
+        }
+        .linkedin-icon:hover svg { opacity: 0.8; }
+
+        .follow-up-section {
+            padding: 12px 32px 24px;
+        }
+        .follow-up-section h3 {
+            font-size: 14px;
+            font-weight: 600;
+            color: #6b7280;
+            margin-bottom: 8px;
+        }
+        .follow-up-list {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+        }
+        .follow-up-chip {
+            background: #fef3c7;
+            border: 1px solid #fbbf24;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            color: #92400e;
+        }
+
+        /* Tab navigation */
+        .tab-nav {
+            display: flex;
+            background: white;
+            border-bottom: 2px solid #e0e0e0;
+            padding: 0 32px;
+        }
+        .tab-btn {
+            padding: 14px 24px;
+            border: none;
+            background: none;
+            font-size: 14px;
+            font-weight: 600;
+            color: #6b7280;
+            cursor: pointer;
+            border-bottom: 3px solid transparent;
+            margin-bottom: -2px;
+            transition: all 0.2s;
+        }
+        .tab-btn:hover { color: #1f2937; }
+        .tab-btn.active {
+            color: #c5050c;
+            border-bottom-color: #c5050c;
+        }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        /* Roster view */
+        .roster-container {
+            display: flex;
+            gap: 20px;
+            padding: 24px 32px;
+            align-items: flex-start;
+            min-height: calc(100vh - 220px);
+        }
+        .roster-column {
+            flex: 1;
+            min-width: 300px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .roster-column-header {
+            padding: 16px 20px;
+            color: white;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .roster-column-header h2 {
+            font-size: 15px;
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        .roster-column-header .badge {
+            background: rgba(255,255,255,0.3);
+            padding: 2px 10px;
+            border-radius: 12px;
+            font-size: 13px;
+            font-weight: 700;
+        }
+        .roster-col-current .roster-column-header { background: #059669; }
+        .roster-col-transition .roster-column-header { background: #f59e0b; }
+        .roster-col-former .roster-column-header { background: #6b7280; }
+
+        .roster-column-body {
+            padding: 12px;
+            min-height: 80px;
+        }
+        .roster-column-body.drag-over {
+            background: #f0f7ff;
+            outline: 2px dashed #3b82f6;
+            outline-offset: -4px;
+        }
+
+        .roster-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 14px 14px 12px;
+            margin-bottom: 10px;
+            cursor: grab;
+            transition: box-shadow 0.2s, transform 0.2s;
+            position: relative;
+        }
+        .roster-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
+        }
+        .roster-card.dragging { opacity: 0.5; transform: rotate(2deg); }
+        .roster-card .r-name {
+            font-weight: 700;
+            font-size: 15px;
+            margin-bottom: 3px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .roster-card .r-title {
+            font-size: 13px;
+            color: #6b7280;
+            margin-bottom: 2px;
+        }
+        .roster-card .r-company {
+            font-size: 13px;
+            color: #9ca3af;
+            font-weight: 500;
+        }
+        .roster-card .r-location {
+            font-size: 12px;
+            color: #b0b7c3;
+            margin-top: 4px;
+        }
+        .roster-card .r-contact {
+            font-size: 11px;
+            color: #d1d5db;
+            margin-top: 4px;
+        }
+        .roster-card .card-actions {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .roster-card:hover .card-actions { opacity: 1; }
+
+        .roster-stats-bar {
+            display: flex;
+            gap: 20px;
+            padding: 16px 32px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+
+        .roster-search-bar {
+            padding: 12px 32px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .roster-search-bar input {
+            flex: 1;
+            max-width: 400px;
+            padding: 8px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .roster-search-bar input:focus { outline: none; border-color: #059669; }
+
+        .add-roster-btn {
+            width: 100%;
+            padding: 10px;
+            border: 2px dashed #d1d5db;
+            background: transparent;
+            border-radius: 8px;
+            cursor: pointer;
+            color: #9ca3af;
+            font-size: 13px;
+            font-weight: 500;
+            transition: all 0.2s;
+            margin-top: 4px;
+        }
+        .add-roster-btn:hover {
+            border-color: #9ca3af;
+            color: #6b7280;
+            background: #f9fafb;
+        }
+
+        @media (max-width: 900px) {
+            .board-container { flex-direction: column; align-items: stretch; }
+            .column { max-width: 100%; min-width: auto; }
+            .roster-container { flex-direction: column; }
+            .roster-column { min-width: auto; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div>
+        <h1>MLI Executive Advisory Board Pipeline</h1>
+        <div class="subtitle">Wisconsin School of Business &mdash; Marketing Leadership Institute</div>
+    </div>
+    <div class="header-actions">
+        <button onclick="resetAllData()">Reset Data</button>
+        <button onclick="exportData()">Export JSON</button>
+        <button onclick="importData()">Import JSON</button>
+        <button id="addPipelineBtn" onclick="openAddModal()">+ Add Pipeline Candidate</button>
+        <button id="addRosterBtn" onclick="openRosterAddModal('current')" style="display:none">+ Add Board Member</button>
+    </div>
+</header>
+
+<div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('pipeline')">Recruitment Pipeline</button>
+    <button class="tab-btn" onclick="switchTab('roster')">Board Roster</button>
+</div>
+
+<!-- Pipeline Tab -->
+<div class="tab-content active" id="tab-pipeline">
+    <div class="search-bar">
+        <input type="text" id="searchInput" placeholder="Search by name, title, or company..." oninput="filterCards()">
+    </div>
+
+    <div class="stats-bar" id="statsBar"></div>
+
+    <div class="board-container" id="board"></div>
+
+    <div class="follow-up-section" id="followUpSection">
+        <h3>Follow-Up Reminders</h3>
+        <div class="follow-up-list" id="followUpList"></div>
+    </div>
+</div>
+
+<!-- Board Roster Tab -->
+<div class="tab-content" id="tab-roster">
+    <div class="roster-search-bar">
+        <input type="text" id="rosterSearchInput" placeholder="Search board members by name, title, or company..." oninput="filterRoster()">
+    </div>
+    <div class="roster-stats-bar" id="rosterStatsBar"></div>
+    <div class="roster-container" id="rosterBoard"></div>
+</div>
+
+<!-- Add/Edit Modal -->
+<div class="modal-overlay" id="modal">
+    <div class="modal">
+        <h3 id="modalTitle">Add New Person</h3>
+        <input type="hidden" id="editId">
+        <label>Full Name *</label>
+        <input type="text" id="inputName" placeholder="e.g. Jane Smith">
+        <label>Title / Role</label>
+        <input type="text" id="inputTitle" placeholder="e.g. CMO">
+        <label>Company</label>
+        <input type="text" id="inputCompany" placeholder="e.g. Google">
+        <label>LinkedIn Profile URL</label>
+        <input type="url" id="inputLinkedin" placeholder="https://www.linkedin.com/in/...">
+        <label>Photo URL / Path</label>
+        <input type="text" id="inputPhoto" placeholder="e.g. headshots/name.jpg">
+        <label>Stage</label>
+        <select id="inputStage">
+            <option value="consideration">Consideration</option>
+            <option value="discovery">Discovery</option>
+            <option value="invitation">Invitation Extended</option>
+            <option value="accepted">Accepted</option>
+            <option value="confirmed">Confirmed</option>
+            <option value="declined">Declined</option>
+        </select>
+        <label>Notes</label>
+        <textarea id="inputNotes" placeholder="Any additional notes..."></textarea>
+        <div class="modal-actions">
+            <button onclick="closeModal()">Cancel</button>
+            <button class="btn-primary" onclick="savePerson()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Roster Member Modal -->
+<div class="modal-overlay" id="rosterModal">
+    <div class="modal">
+        <h3 id="rosterModalTitle">Add Board Member</h3>
+        <input type="hidden" id="rosterEditId">
+        <label>Full Name *</label>
+        <input type="text" id="rosterInputName" placeholder="e.g. Jane Smith">
+        <label>Title / Role</label>
+        <input type="text" id="rosterInputTitle" placeholder="e.g. CMO">
+        <label>Company</label>
+        <input type="text" id="rosterInputCompany" placeholder="e.g. Google">
+        <label>Location</label>
+        <input type="text" id="rosterInputLocation" placeholder="e.g. Chicago">
+        <label>LinkedIn Profile URL</label>
+        <input type="url" id="rosterInputLinkedin" placeholder="https://www.linkedin.com/in/...">
+        <label>Photo URL / Path</label>
+        <input type="text" id="rosterInputPhoto" placeholder="e.g. headshots/name.jpg">
+        <label>WSB Contact</label>
+        <input type="text" id="rosterInputContact" placeholder="e.g. Alan Stoffer">
+        <label>Status</label>
+        <select id="rosterInputStatus">
+            <option value="current">Current Member</option>
+            <option value="transition">In Transition</option>
+            <option value="former">Former Member</option>
+        </select>
+        <label>Notes</label>
+        <textarea id="rosterInputNotes" placeholder="Any additional notes..."></textarea>
+        <div class="modal-actions">
+            <button onclick="closeRosterModal()">Cancel</button>
+            <button class="btn-primary" onclick="saveRosterMember()">Save</button>
+        </div>
+    </div>
+</div>
+
+<!-- Import Modal -->
+<div class="modal-overlay" id="importModal">
+    <div class="modal">
+        <h3>Import Data</h3>
+        <label>Paste JSON data below</label>
+        <textarea id="importTextarea" style="min-height:150px" placeholder='Paste exported JSON here...'></textarea>
+        <div class="modal-actions">
+            <button onclick="closeImportModal()">Cancel</button>
+            <button class="btn-primary" onclick="doImport()">Import</button>
+        </div>
+    </div>
+</div>
+
+<script>
+const STAGES = [
+    { id: 'consideration', label: 'Consideration', desc: "People we think might be a good fit, but we haven't reached out yet." },
+    { id: 'discovery', label: 'Discovery', desc: 'Outreach done and/or initial conversation about EAB expectations.' },
+    { id: 'invitation', label: 'Invitation Extended', desc: 'MLI Director has nominated the individual to join the EAB.' },
+    { id: 'accepted', label: 'Accepted', desc: 'The individual has accepted the nomination to join.' },
+    { id: 'confirmed', label: 'Confirmed', desc: 'EAB Executive Committee has confirmed membership.' },
+    { id: 'declined', label: 'Declined', desc: 'The individual did not receive a nomination or declined to proceed.' },
+];
+
+const STAGE_COLORS = {
+    consideration: '#6366f1',
+    discovery: '#f59e0b',
+    invitation: '#3b82f6',
+    accepted: '#10b981',
+    confirmed: '#059669',
+    declined: '#ef4444',
+};
+
+const STORAGE_KEY = 'mli_eab_pipeline';
+
+function generateId() {
+    return Date.now().toString(36) + Math.random().toString(36).substr(2, 5);
+}
+
+function loadData() {
+    const stored = localStorage.getItem(STORAGE_KEY);
+    if (stored) return JSON.parse(stored);
+    return getDefaultData();
+}
+
+function saveData(data) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(data));
+}
+
+function getDefaultData() {
+    return {
+        people: [
+            // Consideration
+            { id: generateId(), name: 'Mila North', title: 'CMO', company: 'Fermented Food Holding', linkedin: '', stage: 'consideration', notes: '' },
+            { id: generateId(), name: 'Aaron Anderson', title: 'Marketing Insights', company: 'Meta', linkedin: '', stage: 'consideration', notes: '' },
+            { id: generateId(), name: 'Amy Carton', title: 'Director, Talent Development', company: 'Ogilvy', linkedin: '', stage: 'consideration', notes: '' },
+            { id: generateId(), name: 'Anshu Gupta', title: 'AVP, Market Research', company: 'Eli Lilly', linkedin: '', stage: 'consideration', notes: '' },
+            { id: generateId(), name: 'Jim Rudolph', title: 'Category Insights', company: 'Mondelez', linkedin: '', stage: 'consideration', notes: '' },
+            { id: generateId(), name: 'Meredith Gannon', title: 'CMO', company: 'GE Healthcare', linkedin: '', stage: 'consideration', notes: '' },
+            { id: generateId(), name: 'Sherina Smith', title: 'CMO', company: 'American Family Insurance', linkedin: 'https://www.linkedin.com/in/sherinasmith/', stage: 'consideration', notes: '' },
+            { id: generateId(), name: 'Emily Gibson', title: 'Vice President of Marketing', company: 'Vail Resorts', linkedin: 'https://www.linkedin.com/in/emilybgibson/', stage: 'consideration', notes: '' },
+            { id: generateId(), name: 'Tom Shearman', title: 'Director of Consumer Marketing', company: 'Exact Sciences', linkedin: 'https://www.linkedin.com/in/tomshearman/', stage: 'consideration', notes: '' },
+            // Discovery
+            { id: generateId(), name: 'Stephanie Kowalski', title: 'Independent Consultant', company: '', linkedin: '', stage: 'discovery', notes: '' },
+            // Confirmed
+            { id: generateId(), name: 'Kajoli Tankha', title: 'Senior Director, Consumer and Brand Insights', company: 'Microsoft', linkedin: 'https://www.linkedin.com/in/kajoli-tankha/', stage: 'confirmed', photo: 'headshots/kajoli-tankha.jpg', notes: '' },
+            { id: generateId(), name: 'Aaron Gretebeck', title: 'VP Child Care', company: 'Kimberly Clark', linkedin: 'https://www.linkedin.com/in/aaron-gretebeck-9b006422/', stage: 'confirmed', photo: 'headshots/aaron-gretebeck.jpg', notes: '' },
+            // Declined
+            { id: generateId(), name: 'Lynn Girotto', title: 'CMO', company: 'Qualtrics', linkedin: '', stage: 'declined', notes: '' },
+            { id: generateId(), name: 'Neeraj Jayaraman', title: 'Head of Marketing Science', company: 'Meta', linkedin: '', stage: 'declined', notes: '' },
+            { id: generateId(), name: 'Vince Abney', title: 'Principal, Strategic Partnerships', company: 'Adobe', linkedin: '', stage: 'declined', notes: '' },
+            { id: generateId(), name: 'Shannon Wasiolek', title: 'SVP: Field Readiness', company: 'Salesforce', linkedin: '', stage: 'declined', notes: '' },
+            { id: generateId(), name: 'Kellie Fitzgerald', title: 'Managing Director - Retail', company: 'Google', linkedin: '', stage: 'declined', notes: '' },
+            { id: generateId(), name: 'Julie Hermann', title: 'Director, Consumer Insights', company: 'Ulta Beauty', linkedin: '', stage: 'declined', notes: '' },
+            { id: generateId(), name: 'Karen Barson', title: 'SVP Product Marketing', company: 'Intuit', linkedin: '', stage: 'declined', notes: '' },
+            { id: generateId(), name: 'Dan Pilas', title: 'CMO', company: 'SC Johnson', linkedin: '', stage: 'declined', notes: '' },
+        ],
+        followUps: [
+            { name: 'Moazzam', company: 'Google' },
+            { name: 'Tom Schar', company: 'Meta' },
+            { name: 'Tanya Schooly', company: 'Lilly' },
+            { name: 'Dan', company: 'SCJ' },
+        ]
+    };
+}
+
+let data = loadData();
+
+function render() {
+    renderBoard();
+    renderStats();
+    renderFollowUps();
+}
+
+function renderBoard() {
+    const board = document.getElementById('board');
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    board.innerHTML = '';
+
+    STAGES.forEach(stage => {
+        const col = document.createElement('div');
+        col.className = `column col-${stage.id}`;
+
+        const people = data.people.filter(p => p.stage === stage.id);
+        const filtered = people.filter(p =>
+            !searchTerm ||
+            p.name.toLowerCase().includes(searchTerm) ||
+            (p.title || '').toLowerCase().includes(searchTerm) ||
+            (p.company || '').toLowerCase().includes(searchTerm)
+        );
+
+        col.innerHTML = `
+            <div class="column-header">
+                <div>
+                    <h2>${stage.label}</h2>
+                    <div class="desc">${stage.desc}</div>
+                </div>
+                <span class="badge">${people.length}</span>
+            </div>
+            <div class="column-body" data-stage="${stage.id}"
+                 ondragover="handleDragOver(event)"
+                 ondragleave="handleDragLeave(event)"
+                 ondrop="handleDrop(event, '${stage.id}')">
+                ${filtered.map(p => renderCard(p)).join('')}
+                <button class="add-card-btn" onclick="openAddModal('${stage.id}')">+ Add person</button>
+            </div>
+        `;
+        board.appendChild(col);
+    });
+}
+
+function renderCard(person) {
+    const linkedinHtml = person.linkedin
+        ? `<a href="${escapeHtml(person.linkedin)}" target="_blank" rel="noopener" class="linkedin-icon" title="View LinkedIn Profile"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72"><rect width="72" height="72" rx="8" fill="#0a66c2"/><path d="M20.1 29.2h6.5v20.9h-6.5zM23.3 18.5c2.1 0 3.8 1.7 3.8 3.8s-1.7 3.8-3.8 3.8-3.8-1.7-3.8-3.8 1.7-3.8 3.8-3.8M30.4 29.2h6.2v2.9h.1c.9-1.6 3-3.3 6.1-3.3 6.5 0 7.7 4.3 7.7 9.9v11.4h-6.5V40.1c0-2.4 0-5.5-3.3-5.5s-3.9 2.6-3.9 5.3v10.2h-6.5V29.2z" fill="#fff"/></svg></a>`
+        : '';
+    const notesHtml = person.notes
+        ? `<div class="notes">${escapeHtml(person.notes)}</div>`
+        : '';
+    const initials = getInitials(person.name);
+    const color = getAvatarColor(person.name);
+    const avatarInner = person.photo
+        ? `<img src="${escapeHtml(person.photo)}" alt="${escapeHtml(person.name)}">`
+        : initials;
+
+    return `
+        <div class="card" draggable="true"
+             ondragstart="handleDragStart(event, '${person.id}')"
+             ondragend="handleDragEnd(event)"
+             id="card-${person.id}">
+            <div class="card-actions">
+                <button onclick="openEditModal('${person.id}')" title="Edit">&#9998;</button>
+                <button class="delete" onclick="deletePerson('${person.id}')" title="Delete">&times;</button>
+            </div>
+            <div class="card-layout">
+                <div class="avatar" style="background:${color}">${avatarInner}</div>
+                <div class="card-info">
+                    <div class="name">
+                        <span>${escapeHtml(person.name)}</span>
+                        ${linkedinHtml}
+                    </div>
+                    ${person.title ? `<div class="title">${escapeHtml(person.title)}</div>` : ''}
+                    ${person.company ? `<div class="company">${escapeHtml(person.company)}</div>` : ''}
+                </div>
+            </div>
+            ${notesHtml}
+        </div>
+    `;
+}
+
+function renderStats() {
+    const bar = document.getElementById('statsBar');
+    const total = data.people.length;
+    bar.innerHTML = `<div class="stat"><span class="count">${total}</span> Total</div>` +
+        STAGES.map(s => {
+            const count = data.people.filter(p => p.stage === s.id).length;
+            return `<div class="stat">
+                <span class="dot" style="background:${STAGE_COLORS[s.id]}"></span>
+                ${s.label}: <span class="count">${count}</span>
+            </div>`;
+        }).join('');
+}
+
+function renderFollowUps() {
+    const section = document.getElementById('followUpSection');
+    const list = document.getElementById('followUpList');
+    if (!data.followUps || data.followUps.length === 0) {
+        section.style.display = 'none';
+        return;
+    }
+    section.style.display = 'block';
+    list.innerHTML = data.followUps.map((f, i) => `
+        <span class="follow-up-chip">
+            ${escapeHtml(f.name)}${f.company ? ' @ ' + escapeHtml(f.company) : ''}
+            <span style="cursor:pointer;margin-left:6px" onclick="removeFollowUp(${i})" title="Remove">&times;</span>
+        </span>
+    `).join('');
+}
+
+function escapeHtml(str) {
+    if (!str) return '';
+    return str.replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+function getInitials(name) {
+    if (!name) return '?';
+    const parts = name.trim().split(/\s+/);
+    if (parts.length === 1) return parts[0][0].toUpperCase();
+    return (parts[0][0] + parts[parts.length - 1][0]).toUpperCase();
+}
+
+const AVATAR_COLORS = [
+    '#c5050c','#0a66c2','#059669','#7c3aed','#db2777',
+    '#ea580c','#0891b2','#4f46e5','#b91c1c','#15803d',
+    '#7e22ce','#be185d','#c2410c','#0e7490','#6d28d9',
+];
+function getAvatarColor(name) {
+    let hash = 0;
+    for (let i = 0; i < (name||'').length; i++) hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    return AVATAR_COLORS[Math.abs(hash) % AVATAR_COLORS.length];
+}
+
+// Drag and Drop
+let draggedId = null;
+
+function handleDragStart(e, id) {
+    draggedId = id;
+    e.target.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleDragEnd(e) {
+    e.target.classList.remove('dragging');
+    document.querySelectorAll('.column-body').forEach(el => el.classList.remove('drag-over'));
+}
+
+function handleDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    e.currentTarget.classList.add('drag-over');
+}
+
+function handleDragLeave(e) {
+    e.currentTarget.classList.remove('drag-over');
+}
+
+function handleDrop(e, newStage) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    if (!draggedId) return;
+    const person = data.people.find(p => p.id === draggedId);
+    if (person) {
+        person.stage = newStage;
+        saveData(data);
+        render();
+    }
+    draggedId = null;
+}
+
+// Modal
+function openAddModal(stage) {
+    document.getElementById('modalTitle').textContent = 'Add New Person';
+    document.getElementById('editId').value = '';
+    document.getElementById('inputName').value = '';
+    document.getElementById('inputTitle').value = '';
+    document.getElementById('inputCompany').value = '';
+    document.getElementById('inputLinkedin').value = '';
+    document.getElementById('inputPhoto').value = '';
+    document.getElementById('inputStage').value = stage || 'consideration';
+    document.getElementById('inputNotes').value = '';
+    document.getElementById('modal').classList.add('active');
+    setTimeout(() => document.getElementById('inputName').focus(), 100);
+}
+
+function openEditModal(id) {
+    const person = data.people.find(p => p.id === id);
+    if (!person) return;
+    document.getElementById('modalTitle').textContent = 'Edit Person';
+    document.getElementById('editId').value = id;
+    document.getElementById('inputName').value = person.name;
+    document.getElementById('inputTitle').value = person.title || '';
+    document.getElementById('inputCompany').value = person.company || '';
+    document.getElementById('inputLinkedin').value = person.linkedin || '';
+    document.getElementById('inputPhoto').value = person.photo || '';
+    document.getElementById('inputStage').value = person.stage;
+    document.getElementById('inputNotes').value = person.notes || '';
+    document.getElementById('modal').classList.add('active');
+}
+
+function closeModal() {
+    document.getElementById('modal').classList.remove('active');
+}
+
+function savePerson() {
+    const name = document.getElementById('inputName').value.trim();
+    if (!name) { alert('Name is required'); return; }
+    const editId = document.getElementById('editId').value;
+    const personData = {
+        name,
+        title: document.getElementById('inputTitle').value.trim(),
+        company: document.getElementById('inputCompany').value.trim(),
+        linkedin: document.getElementById('inputLinkedin').value.trim(),
+        photo: document.getElementById('inputPhoto').value.trim(),
+        stage: document.getElementById('inputStage').value,
+        notes: document.getElementById('inputNotes').value.trim(),
+    };
+
+    if (editId) {
+        const person = data.people.find(p => p.id === editId);
+        if (person) Object.assign(person, personData);
+    } else {
+        personData.id = generateId();
+        data.people.push(personData);
+    }
+
+    saveData(data);
+    closeModal();
+    render();
+}
+
+function deletePerson(id) {
+    const person = data.people.find(p => p.id === id);
+    if (!person) return;
+    if (!confirm(`Remove ${person.name} from the pipeline?`)) return;
+    data.people = data.people.filter(p => p.id !== id);
+    saveData(data);
+    render();
+}
+
+function removeFollowUp(index) {
+    data.followUps.splice(index, 1);
+    saveData(data);
+    renderFollowUps();
+}
+
+function filterCards() {
+    renderBoard();
+}
+
+// Export / Import
+function exportData() {
+    const json = JSON.stringify(data, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mli_eab_pipeline_' + new Date().toISOString().slice(0,10) + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+}
+
+function importData() {
+    document.getElementById('importTextarea').value = '';
+    document.getElementById('importModal').classList.add('active');
+}
+
+function closeImportModal() {
+    document.getElementById('importModal').classList.remove('active');
+}
+
+function doImport() {
+    try {
+        const imported = JSON.parse(document.getElementById('importTextarea').value);
+        if (!imported.people || !Array.isArray(imported.people)) {
+            alert('Invalid data format. Must contain a "people" array.');
+            return;
+        }
+        data = imported;
+        saveData(data);
+        closeImportModal();
+        render();
+    } catch (e) {
+        alert('Invalid JSON: ' + e.message);
+    }
+}
+
+// =============================================
+// TAB SWITCHING
+// =============================================
+let activeTab = 'pipeline';
+
+function switchTab(tab) {
+    activeTab = tab;
+    document.querySelectorAll('.tab-btn').forEach(btn => btn.classList.remove('active'));
+    document.querySelectorAll('.tab-content').forEach(tc => tc.classList.remove('active'));
+    document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
+    document.getElementById('tab-' + tab).classList.add('active');
+
+    // Toggle add buttons
+    document.getElementById('addPipelineBtn').style.display = tab === 'pipeline' ? '' : 'none';
+    document.getElementById('addRosterBtn').style.display = tab === 'roster' ? '' : 'none';
+
+    if (tab === 'roster') renderRoster();
+}
+
+// =============================================
+// BOARD ROSTER DATA & LOGIC
+// =============================================
+const ROSTER_STATUSES = [
+    { id: 'current', label: 'Current Members', desc: 'Active members of the Executive Advisory Board.' },
+    { id: 'transition', label: 'In Transition', desc: 'Members who may be departing soon but status is not yet confirmed.' },
+    { id: 'former', label: 'Former Members', desc: 'Past board members who have rolled off.' },
+];
+
+const ROSTER_COLORS = {
+    current: '#059669',
+    transition: '#f59e0b',
+    former: '#6b7280',
+};
+
+const ROSTER_STORAGE_KEY = 'mli_eab_roster';
+
+function loadRosterData() {
+    const stored = localStorage.getItem(ROSTER_STORAGE_KEY);
+    if (stored) return JSON.parse(stored);
+    return getDefaultRosterData();
+}
+
+function saveRosterData(d) {
+    localStorage.setItem(ROSTER_STORAGE_KEY, JSON.stringify(d));
+}
+
+function getDefaultRosterData() {
+    return {
+        members: [
+            // Current members (from contacts spreadsheet)
+            { id: generateId(), name: 'Adam Davis', title: 'Senior Divisional Merchandise Manager, Home Care', company: 'Target Corporation', location: 'Minneapolis', linkedin: 'https://www.linkedin.com/in/adam-davis-2975215/', contact: 'Alan Stoffer', status: 'transition', photo: '', notes: '' },
+            { id: generateId(), name: 'Barry Jennings', title: 'Director, Cloud & Enterprise Insights', company: 'Microsoft', location: 'Atlanta', linkedin: 'https://www.linkedin.com/in/barry-jennings/', contact: '', status: 'transition', photo: '', notes: '' },
+            { id: generateId(), name: 'Chuck Hwang', title: 'Vice President of Analytics & Insights - Family Care', company: 'Procter & Gamble', location: 'Cincinnati', linkedin: 'https://www.linkedin.com/in/chuckhwang/', contact: '', status: 'current', photo: 'headshots/chuck-hwang.jpg', notes: '' },
+            { id: generateId(), name: 'Jake Abel', title: 'Managing Director of International Marketing, Global Marketing Enablement, Media', company: 'Delta Airlines', location: 'Atlanta', linkedin: 'https://www.linkedin.com/in/jakeabel/', contact: '', status: 'transition', photo: '', notes: '' },
+            { id: generateId(), name: 'Julian Lopez', title: 'AVP of Member & Market Insights', company: 'USAA', location: 'San Antonio', linkedin: 'https://www.linkedin.com/in/julianlo1/', contact: '', status: 'transition', photo: '', notes: '' },
+            { id: generateId(), name: "Katie O'Neill", title: 'Brand Director', company: 'General Mills', location: 'Minneapolis', linkedin: 'https://www.linkedin.com/in/katieoneillmba/', contact: '', status: 'current', photo: '', notes: '' },
+            { id: generateId(), name: 'Ken Nelson', title: 'Managing Director', company: 'Deloitte', location: 'New Jersey', linkedin: 'https://www.linkedin.com/in/ksn123/', contact: '', status: 'current', photo: '', notes: '' },
+            { id: generateId(), name: 'Kyle Papanikolas', title: 'Senior Director - US Strategic Insights', company: "McDonald's", location: 'Chicago', linkedin: 'https://www.linkedin.com/in/kyle-papanikolas-700b2b6/', contact: '', status: 'current', photo: '', notes: '' },
+            { id: generateId(), name: 'Kyle Gore', title: 'Vice President/GM - PepsiCo Direct Businesses', company: 'PepsiCo', location: 'Dallas', linkedin: 'https://www.linkedin.com/in/kyle-gore-a3b8ba1/', contact: '', status: 'current', photo: '', notes: '' },
+            { id: generateId(), name: 'Lisa Gudding', title: 'President', company: 'Ipsos', location: 'Minneapolis', linkedin: 'https://www.linkedin.com/in/lisagudding/', contact: '', status: 'current', photo: '', notes: '' },
+            { id: generateId(), name: 'Nicole Thomas', title: 'Human Insights Director, CX, Personalization and Big Data', company: 'The Clorox Company', location: 'Atlanta', linkedin: 'https://www.linkedin.com/in/nicolethomas/', contact: '', status: 'current', photo: 'headshots/nicole-thomas.jpg', notes: '' },
+            { id: generateId(), name: 'Paul Metz', title: 'Chief Executive Officer', company: 'C+R Research', location: 'Chicago', linkedin: 'https://www.linkedin.com/in/paul-metz-a370221/', contact: '', status: 'current', photo: '', notes: '' },
+            { id: generateId(), name: 'Polly Baur', title: 'Senior Vice President, Marketing & Strategy', company: 'Charter Next Generation', location: 'Chicago', linkedin: 'https://www.linkedin.com/in/polly-baur/', contact: '', status: 'current', photo: 'headshots/polly-baur.jpg', notes: '' },
+            { id: generateId(), name: 'Sarah Jones', title: 'Head of Brand, Product Marketing and Insights - Grocery Private Brands', company: 'Amazon', location: 'Washington', linkedin: 'https://www.linkedin.com/in/sarahkorbeljones/', contact: '', status: 'current', photo: '', notes: '' },
+            { id: generateId(), name: 'Tanya Schooley', title: 'Director Marketing Insights, Oncology', company: 'AbbVie', location: 'Chicago', linkedin: 'https://www.linkedin.com/in/tanya-schooley-a358b84/', contact: '', status: 'current', photo: 'headshots/tanya-schooley.jpg', notes: '' },
+            { id: generateId(), name: 'Tom Schar', title: 'Senior Director, Marketing & Commerce Cloud', company: 'Salesforce', location: 'San Francisco', linkedin: 'https://www.linkedin.com/in/tom-schar-80356319/', contact: '', status: 'current', photo: '', notes: '' },
+            { id: generateId(), name: 'Kajoli Tankha', title: 'Senior Director, Consumer & Brand Insights', company: 'Microsoft', location: 'Seattle', linkedin: 'https://www.linkedin.com/in/kajoli-tankha/', contact: '', status: 'current', photo: 'headshots/kajoli-tankha.jpg', notes: '' },
+            { id: generateId(), name: 'Aaron Gretebeck', title: 'Vice President of Marketing, Baby & Child Care', company: 'Kimberly-Clark', location: 'Neenah', linkedin: 'https://www.linkedin.com/in/aaron-gretebeck-9b006422/', contact: '', status: 'current', photo: 'headshots/aaron-gretebeck.jpg', notes: '' },
+            { id: generateId(), name: 'Amanda Boyle', title: 'Global Head of Marketing Operations and Technologies', company: 'SC Johnson', location: 'Racine', linkedin: '', contact: '', status: 'current', photo: 'headshots/amanda-boyle.jpg', notes: '' },
+            { id: generateId(), name: 'Deborah Powsner', title: 'Director, Content Strategy & Engagement', company: 'Google', location: 'New York', linkedin: '', contact: '', status: 'current', photo: '', notes: '' },
+            // Former members (rolled off)
+            { id: generateId(), name: 'Christie Crouch', title: 'Vice President and General Manager', company: 'Conagra Brands', location: 'Cincinnati', linkedin: '', contact: '', status: 'former', notes: '' },
+            { id: generateId(), name: 'Benjamin Lawnicki', title: 'Vice President of Marketing, Thinx', company: 'Kimberly-Clark', location: 'Chicago', linkedin: 'https://www.linkedin.com/in/benjamin-lawnicki/', contact: '', status: 'former', notes: '' },
+        ]
+    };
+}
+
+let rosterData = loadRosterData();
+
+function renderRoster() {
+    renderRosterBoard();
+    renderRosterStats();
+}
+
+function renderRosterBoard() {
+    const board = document.getElementById('rosterBoard');
+    const searchTerm = document.getElementById('rosterSearchInput').value.toLowerCase();
+    board.innerHTML = '';
+
+    ROSTER_STATUSES.forEach(status => {
+        const col = document.createElement('div');
+        col.className = `roster-column roster-col-${status.id}`;
+
+        const members = rosterData.members.filter(m => m.status === status.id);
+        const filtered = members.filter(m =>
+            !searchTerm ||
+            m.name.toLowerCase().includes(searchTerm) ||
+            (m.title || '').toLowerCase().includes(searchTerm) ||
+            (m.company || '').toLowerCase().includes(searchTerm) ||
+            (m.location || '').toLowerCase().includes(searchTerm)
+        );
+
+        col.innerHTML = `
+            <div class="roster-column-header">
+                <div>
+                    <h2>${status.label}</h2>
+                </div>
+                <span class="badge">${members.length}</span>
+            </div>
+            <div class="roster-column-body" data-roster-status="${status.id}"
+                 ondragover="handleRosterDragOver(event)"
+                 ondragleave="handleRosterDragLeave(event)"
+                 ondrop="handleRosterDrop(event, '${status.id}')">
+                ${filtered.map(m => renderRosterCard(m)).join('')}
+                <button class="add-roster-btn" onclick="openRosterAddModal('${status.id}')">+ Add member</button>
+            </div>
+        `;
+        board.appendChild(col);
+    });
+}
+
+function renderRosterCard(member) {
+    const linkedinHtml = member.linkedin
+        ? `<a href="${escapeHtml(member.linkedin)}" target="_blank" rel="noopener" class="linkedin-icon" title="View LinkedIn Profile"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72"><rect width="72" height="72" rx="8" fill="#0a66c2"/><path d="M20.1 29.2h6.5v20.9h-6.5zM23.3 18.5c2.1 0 3.8 1.7 3.8 3.8s-1.7 3.8-3.8 3.8-3.8-1.7-3.8-3.8 1.7-3.8 3.8-3.8M30.4 29.2h6.2v2.9h.1c.9-1.6 3-3.3 6.1-3.3 6.5 0 7.7 4.3 7.7 9.9v11.4h-6.5V40.1c0-2.4 0-5.5-3.3-5.5s-3.9 2.6-3.9 5.3v10.2h-6.5V29.2z" fill="#fff"/></svg></a>`
+        : '';
+    const locationHtml = member.location
+        ? `<div class="r-location">${escapeHtml(member.location)}</div>`
+        : '';
+    const contactHtml = member.contact
+        ? `<div class="r-contact">WSB Contact: ${escapeHtml(member.contact)}</div>`
+        : '';
+    const notesHtml = member.notes
+        ? `<div class="notes">${escapeHtml(member.notes)}</div>`
+        : '';
+    const initials = getInitials(member.name);
+    const color = getAvatarColor(member.name);
+    const avatarInner = member.photo
+        ? `<img src="${escapeHtml(member.photo)}" alt="${escapeHtml(member.name)}">`
+        : initials;
+
+    return `
+        <div class="roster-card" draggable="true"
+             ondragstart="handleRosterDragStart(event, '${member.id}')"
+             ondragend="handleRosterDragEnd(event)"
+             id="roster-card-${member.id}">
+            <div class="card-actions">
+                <button onclick="openRosterEditModal('${member.id}')" title="Edit">&#9998;</button>
+                <button class="delete" onclick="deleteRosterMember('${member.id}')" title="Delete">&times;</button>
+            </div>
+            <div class="card-layout">
+                <div class="avatar avatar-lg" style="background:${color}">${avatarInner}</div>
+                <div class="card-info">
+                    <div class="r-name">
+                        <span>${escapeHtml(member.name)}</span>
+                        ${linkedinHtml}
+                    </div>
+                    ${member.title ? `<div class="r-title">${escapeHtml(member.title)}</div>` : ''}
+                    ${member.company ? `<div class="r-company">${escapeHtml(member.company)}</div>` : ''}
+                    ${locationHtml}
+                </div>
+            </div>
+            ${contactHtml}
+            ${notesHtml}
+        </div>
+    `;
+}
+
+function renderRosterStats() {
+    const bar = document.getElementById('rosterStatsBar');
+    const total = rosterData.members.length;
+    bar.innerHTML = `<div class="stat"><span class="count">${total}</span> Total Board Members</div>` +
+        ROSTER_STATUSES.map(s => {
+            const count = rosterData.members.filter(m => m.status === s.id).length;
+            return `<div class="stat">
+                <span class="dot" style="background:${ROSTER_COLORS[s.id]}"></span>
+                ${s.label}: <span class="count">${count}</span>
+            </div>`;
+        }).join('');
+}
+
+// Roster Drag and Drop
+let rosterDraggedId = null;
+
+function handleRosterDragStart(e, id) {
+    rosterDraggedId = id;
+    e.target.classList.add('dragging');
+    e.dataTransfer.effectAllowed = 'move';
+}
+
+function handleRosterDragEnd(e) {
+    e.target.classList.remove('dragging');
+    document.querySelectorAll('.roster-column-body').forEach(el => el.classList.remove('drag-over'));
+}
+
+function handleRosterDragOver(e) {
+    e.preventDefault();
+    e.dataTransfer.dropEffect = 'move';
+    e.currentTarget.classList.add('drag-over');
+}
+
+function handleRosterDragLeave(e) {
+    e.currentTarget.classList.remove('drag-over');
+}
+
+function handleRosterDrop(e, newStatus) {
+    e.preventDefault();
+    e.currentTarget.classList.remove('drag-over');
+    if (!rosterDraggedId) return;
+    const member = rosterData.members.find(m => m.id === rosterDraggedId);
+    if (member) {
+        member.status = newStatus;
+        saveRosterData(rosterData);
+        renderRoster();
+    }
+    rosterDraggedId = null;
+}
+
+// Roster Modal
+function openRosterAddModal(status) {
+    document.getElementById('rosterModalTitle').textContent = 'Add Board Member';
+    document.getElementById('rosterEditId').value = '';
+    document.getElementById('rosterInputName').value = '';
+    document.getElementById('rosterInputTitle').value = '';
+    document.getElementById('rosterInputCompany').value = '';
+    document.getElementById('rosterInputLocation').value = '';
+    document.getElementById('rosterInputLinkedin').value = '';
+    document.getElementById('rosterInputPhoto').value = '';
+    document.getElementById('rosterInputContact').value = '';
+    document.getElementById('rosterInputStatus').value = status || 'current';
+    document.getElementById('rosterInputNotes').value = '';
+    document.getElementById('rosterModal').classList.add('active');
+    setTimeout(() => document.getElementById('rosterInputName').focus(), 100);
+}
+
+function openRosterEditModal(id) {
+    const member = rosterData.members.find(m => m.id === id);
+    if (!member) return;
+    document.getElementById('rosterModalTitle').textContent = 'Edit Board Member';
+    document.getElementById('rosterEditId').value = id;
+    document.getElementById('rosterInputName').value = member.name;
+    document.getElementById('rosterInputTitle').value = member.title || '';
+    document.getElementById('rosterInputCompany').value = member.company || '';
+    document.getElementById('rosterInputLocation').value = member.location || '';
+    document.getElementById('rosterInputLinkedin').value = member.linkedin || '';
+    document.getElementById('rosterInputPhoto').value = member.photo || '';
+    document.getElementById('rosterInputContact').value = member.contact || '';
+    document.getElementById('rosterInputStatus').value = member.status;
+    document.getElementById('rosterInputNotes').value = member.notes || '';
+    document.getElementById('rosterModal').classList.add('active');
+}
+
+function closeRosterModal() {
+    document.getElementById('rosterModal').classList.remove('active');
+}
+
+function saveRosterMember() {
+    const name = document.getElementById('rosterInputName').value.trim();
+    if (!name) { alert('Name is required'); return; }
+    const editId = document.getElementById('rosterEditId').value;
+    const memberData = {
+        name,
+        title: document.getElementById('rosterInputTitle').value.trim(),
+        company: document.getElementById('rosterInputCompany').value.trim(),
+        location: document.getElementById('rosterInputLocation').value.trim(),
+        linkedin: document.getElementById('rosterInputLinkedin').value.trim(),
+        photo: document.getElementById('rosterInputPhoto').value.trim(),
+        contact: document.getElementById('rosterInputContact').value.trim(),
+        status: document.getElementById('rosterInputStatus').value,
+        notes: document.getElementById('rosterInputNotes').value.trim(),
+    };
+
+    if (editId) {
+        const member = rosterData.members.find(m => m.id === editId);
+        if (member) Object.assign(member, memberData);
+    } else {
+        memberData.id = generateId();
+        rosterData.members.push(memberData);
+    }
+
+    saveRosterData(rosterData);
+    closeRosterModal();
+    renderRoster();
+}
+
+function deleteRosterMember(id) {
+    const member = rosterData.members.find(m => m.id === id);
+    if (!member) return;
+    if (!confirm(`Remove ${member.name} from the board roster?`)) return;
+    rosterData.members = rosterData.members.filter(m => m.id !== id);
+    saveRosterData(rosterData);
+    renderRoster();
+}
+
+function filterRoster() {
+    renderRosterBoard();
+}
+
+// Export/Import now includes roster data
+const _origExport = exportData;
+exportData = function() {
+    const combined = {
+        pipeline: data,
+        roster: rosterData,
+    };
+    const json = JSON.stringify(combined, null, 2);
+    const blob = new Blob([json], { type: 'application/json' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'mli_eab_full_' + new Date().toISOString().slice(0,10) + '.json';
+    a.click();
+    URL.revokeObjectURL(url);
+};
+
+const _origDoImport = doImport;
+doImport = function() {
+    try {
+        const imported = JSON.parse(document.getElementById('importTextarea').value);
+        // Support both new combined format and legacy pipeline-only format
+        if (imported.pipeline && imported.roster) {
+            data = imported.pipeline;
+            rosterData = imported.roster;
+            saveData(data);
+            saveRosterData(rosterData);
+        } else if (imported.people && Array.isArray(imported.people)) {
+            data = imported;
+            saveData(data);
+        } else {
+            alert('Invalid data format.');
+            return;
+        }
+        closeImportModal();
+        render();
+        if (activeTab === 'roster') renderRoster();
+    } catch (e) {
+        alert('Invalid JSON: ' + e.message);
+    }
+};
+
+// Reset all data to defaults
+function resetAllData() {
+    if (!confirm('Reset all data to defaults? This will clear any changes you\'ve made and reload the original data with LinkedIn links and headshots.')) return;
+    localStorage.removeItem(STORAGE_KEY);
+    localStorage.removeItem(ROSTER_STORAGE_KEY);
+    data = getDefaultData();
+    rosterData = getDefaultRosterData();
+    render();
+    if (activeTab === 'roster') renderRoster();
+}
+
+// Keyboard shortcuts
+document.addEventListener('keydown', e => {
+    if (e.key === 'Escape') {
+        closeModal();
+        closeRosterModal();
+        closeImportModal();
+    }
+});
+
+// Initialize
+render();
+</script>
+</body>
+</html>
