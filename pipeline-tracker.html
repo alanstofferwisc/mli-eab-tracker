@@ -562,11 +562,169 @@
             background: #f9fafb;
         }
 
+        /* Industry View */
+        .industry-container {
+            display: flex;
+            gap: 16px;
+            padding: 24px 32px;
+            overflow-x: auto;
+            align-items: flex-start;
+            min-height: calc(100vh - 220px);
+        }
+        .industry-column {
+            flex: 1;
+            min-width: 260px;
+            max-width: 320px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .industry-col-cpg .roster-column-header { background: #7c3aed; }
+        .industry-col-tech .roster-column-header { background: #3b82f6; }
+        .industry-col-services .roster-column-header { background: #f59e0b; }
+        .industry-col-healthcare .roster-column-header { background: #ef4444; }
+        .industry-col-retail .roster-column-header { background: #059669; }
+
+        .industry-stats-bar, .targets-stats-bar {
+            display: flex;
+            gap: 20px;
+            padding: 16px 32px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            flex-wrap: wrap;
+        }
+        .industry-search-bar {
+            padding: 12px 32px;
+            background: white;
+            border-bottom: 1px solid #e0e0e0;
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .industry-search-bar input {
+            flex: 1;
+            max-width: 400px;
+            padding: 8px 14px;
+            border: 1px solid #d1d5db;
+            border-radius: 6px;
+            font-size: 14px;
+        }
+        .industry-search-bar input:focus { outline: none; border-color: #7c3aed; }
+
+        .industry-info {
+            padding: 10px 32px;
+            background: #f9fafb;
+            border-bottom: 1px solid #e0e0e0;
+            font-size: 13px;
+            color: #6b7280;
+            font-style: italic;
+        }
+
+        .industry-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 14px 14px 12px;
+            margin-bottom: 10px;
+            cursor: default;
+            transition: box-shadow 0.2s;
+            position: relative;
+        }
+        .industry-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+        }
+
+        /* Target Companies */
+        .targets-container {
+            display: flex;
+            gap: 16px;
+            padding: 24px 32px;
+            overflow-x: auto;
+            align-items: flex-start;
+            min-height: calc(100vh - 220px);
+        }
+        .targets-column {
+            flex: 1;
+            min-width: 260px;
+            max-width: 320px;
+            background: white;
+            border-radius: 12px;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+            overflow: hidden;
+        }
+        .targets-col-cpg .roster-column-header { background: #7c3aed; }
+        .targets-col-tech .roster-column-header { background: #3b82f6; }
+        .targets-col-services .roster-column-header { background: #f59e0b; }
+        .targets-col-healthcare .roster-column-header { background: #ef4444; }
+        .targets-col-retail .roster-column-header { background: #059669; }
+
+        .target-card {
+            background: white;
+            border: 1px solid #e5e7eb;
+            border-radius: 8px;
+            padding: 16px;
+            margin-bottom: 10px;
+            text-align: center;
+            transition: box-shadow 0.2s, transform 0.2s;
+            position: relative;
+        }
+        .target-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-1px);
+        }
+        .target-card .card-actions {
+            position: absolute;
+            top: 8px;
+            right: 8px;
+            display: flex;
+            gap: 4px;
+            opacity: 0;
+            transition: opacity 0.2s;
+        }
+        .target-card:hover .card-actions { opacity: 1; }
+        .target-logo {
+            width: 80px;
+            height: 80px;
+            margin: 0 auto 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            background: #f9fafb;
+            border-radius: 12px;
+            overflow: hidden;
+            border: 1px solid #e5e7eb;
+        }
+        .target-logo img {
+            max-width: 64px;
+            max-height: 64px;
+            object-fit: contain;
+        }
+        .target-logo .logo-fallback {
+            font-size: 24px;
+            font-weight: 700;
+            color: #9ca3af;
+            text-transform: uppercase;
+        }
+        .target-card .target-name {
+            font-weight: 700;
+            font-size: 14px;
+            margin-bottom: 2px;
+        }
+        .target-card .target-domain {
+            font-size: 12px;
+            color: #9ca3af;
+        }
+
         @media (max-width: 900px) {
             .board-container { flex-direction: column; align-items: stretch; }
             .column { max-width: 100%; min-width: auto; }
             .roster-container { flex-direction: column; }
             .roster-column { min-width: auto; }
+            .industry-container { flex-direction: column; }
+            .industry-column { min-width: auto; max-width: 100%; }
+            .targets-container { flex-direction: column; }
+            .targets-column { min-width: auto; max-width: 100%; }
         }
     </style>
 </head>
@@ -583,12 +741,15 @@
         <button onclick="importData()">Import JSON</button>
         <button id="addPipelineBtn" onclick="openAddModal()">+ Add Pipeline Candidate</button>
         <button id="addRosterBtn" onclick="openRosterAddModal('current')" style="display:none">+ Add Board Member</button>
+        <button id="addTargetBtn" onclick="openTargetAddModal()" style="display:none">+ Add Target Company</button>
     </div>
 </header>
 
 <div class="tab-nav">
     <button class="tab-btn active" onclick="switchTab('pipeline')">Recruitment Pipeline</button>
     <button class="tab-btn" onclick="switchTab('roster')">Board Roster</button>
+    <button class="tab-btn" onclick="switchTab('industry')">Industry View</button>
+    <button class="tab-btn" onclick="switchTab('targets')">Target Companies</button>
 </div>
 
 <!-- Pipeline Tab -->
@@ -614,6 +775,22 @@
     </div>
     <div class="roster-stats-bar" id="rosterStatsBar"></div>
     <div class="roster-container" id="rosterBoard"></div>
+</div>
+
+<!-- Industry View Tab -->
+<div class="tab-content" id="tab-industry">
+    <div class="industry-info">To edit members or assign industries, use the Board Roster tab.</div>
+    <div class="industry-search-bar">
+        <input type="text" id="industrySearchInput" placeholder="Search board members by name, title, or company..." oninput="filterIndustry()">
+    </div>
+    <div class="industry-stats-bar" id="industryStatsBar"></div>
+    <div class="industry-container" id="industryBoard"></div>
+</div>
+
+<!-- Target Companies Tab -->
+<div class="tab-content" id="tab-targets">
+    <div class="targets-stats-bar" id="targetsStatsBar"></div>
+    <div class="targets-container" id="targetsBoard"></div>
 </div>
 
 <!-- Add/Edit Modal -->
@@ -674,6 +851,15 @@
             <option value="transition">In Transition</option>
             <option value="former">Former Member</option>
         </select>
+        <label>Industry</label>
+        <select id="rosterInputIndustry">
+            <option value="">-- Select Industry --</option>
+            <option value="cpg">CPG</option>
+            <option value="tech">Tech</option>
+            <option value="services">Services</option>
+            <option value="healthcare">Healthcare</option>
+            <option value="retail">Retail</option>
+        </select>
         <label>Notes</label>
         <textarea id="rosterInputNotes" placeholder="Any additional notes..."></textarea>
         <div class="modal-actions">
@@ -692,6 +878,32 @@
         <div class="modal-actions">
             <button onclick="closeImportModal()">Cancel</button>
             <button class="btn-primary" onclick="doImport()">Import</button>
+        </div>
+    </div>
+</div>
+
+<!-- Add/Edit Target Company Modal -->
+<div class="modal-overlay" id="targetModal">
+    <div class="modal">
+        <h3 id="targetModalTitle">Add Target Company</h3>
+        <input type="hidden" id="targetEditId">
+        <label>Company Name *</label>
+        <input type="text" id="targetInputName" placeholder="e.g. Adobe">
+        <label>Domain (for logo)</label>
+        <input type="text" id="targetInputDomain" placeholder="e.g. adobe.com">
+        <label>Industry *</label>
+        <select id="targetInputIndustry">
+            <option value="cpg">CPG</option>
+            <option value="tech">Tech</option>
+            <option value="services">Services</option>
+            <option value="healthcare">Healthcare</option>
+            <option value="retail">Retail</option>
+        </select>
+        <label>Notes</label>
+        <textarea id="targetInputNotes" placeholder="Any notes..."></textarea>
+        <div class="modal-actions">
+            <button onclick="closeTargetModal()">Cancel</button>
+            <button class="btn-primary" onclick="saveTargetCompany()">Save</button>
         </div>
     </div>
 </div>
@@ -1071,11 +1283,14 @@ function switchTab(tab) {
     document.querySelector(`.tab-btn[onclick="switchTab('${tab}')"]`).classList.add('active');
     document.getElementById('tab-' + tab).classList.add('active');
 
-    // Toggle add buttons
+    // Toggle add buttons - show the right one for each tab
     document.getElementById('addPipelineBtn').style.display = tab === 'pipeline' ? '' : 'none';
     document.getElementById('addRosterBtn').style.display = tab === 'roster' ? '' : 'none';
+    document.getElementById('addTargetBtn').style.display = tab === 'targets' ? '' : 'none';
 
     if (tab === 'roster') renderRoster();
+    if (tab === 'industry') renderIndustryView();
+    if (tab === 'targets') renderTargets();
 }
 
 // =============================================
@@ -1093,11 +1308,55 @@ const ROSTER_COLORS = {
     former: '#6b7280',
 };
 
+const INDUSTRIES = [
+    { id: 'cpg', label: 'CPG', color: '#7c3aed' },
+    { id: 'tech', label: 'Tech', color: '#3b82f6' },
+    { id: 'services', label: 'Services', color: '#f59e0b' },
+    { id: 'healthcare', label: 'Healthcare', color: '#ef4444' },
+    { id: 'retail', label: 'Retail', color: '#059669' },
+];
+
+const INDUSTRY_COLORS = {
+    cpg: '#7c3aed',
+    tech: '#3b82f6',
+    services: '#f59e0b',
+    healthcare: '#ef4444',
+    retail: '#059669',
+};
+
 const ROSTER_STORAGE_KEY = 'mli_eab_roster';
+
+// Company-to-industry mapping for auto-migration of existing data
+const COMPANY_INDUSTRY_MAP = {
+    'target': 'retail', 'target corporation': 'retail',
+    'microsoft': 'tech', 'amazon': 'tech', 'salesforce': 'tech', 'google': 'tech',
+    'procter & gamble': 'cpg', 'p&g': 'cpg', 'general mills': 'cpg',
+    'the clorox company': 'cpg', 'clorox': 'cpg', 'pepsico': 'cpg',
+    'kimberly-clark': 'cpg', 'sc johnson': 'cpg', 'conagra brands': 'cpg', 'conagra': 'cpg',
+    'charter next generation': 'cpg',
+    'deloitte': 'services', 'c+r research': 'services', 'ipsos': 'services',
+    'usaa': 'services', 'delta airlines': 'services', 'delta': 'services',
+    "mcdonald's": 'services', 'mcdonalds': 'services',
+    'abbvie': 'healthcare',
+};
+
+function migrateRosterIndustry(members) {
+    members.forEach(m => {
+        if (!m.industry && m.company) {
+            const key = m.company.toLowerCase();
+            m.industry = COMPANY_INDUSTRY_MAP[key] || '';
+        }
+    });
+    return members;
+}
 
 function loadRosterData() {
     const stored = localStorage.getItem(ROSTER_STORAGE_KEY);
-    if (stored) return JSON.parse(stored);
+    if (stored) {
+        const d = JSON.parse(stored);
+        d.members = migrateRosterIndustry(d.members);
+        return d;
+    }
     return getDefaultRosterData();
 }
 
@@ -1109,29 +1368,29 @@ function getDefaultRosterData() {
     return {
         members: [
             // Current members (from contacts spreadsheet)
-            { id: generateId(), name: 'Adam Davis', title: 'Senior Divisional Merchandise Manager, Home Care', company: 'Target Corporation', location: 'Minneapolis', linkedin: 'https://www.linkedin.com/in/adam-davis-2975215/', contact: 'Alan Stoffer', status: 'transition', photo: '', notes: '' },
-            { id: generateId(), name: 'Barry Jennings', title: 'Director, Cloud & Enterprise Insights', company: 'Microsoft', location: 'Atlanta', linkedin: 'https://www.linkedin.com/in/barry-jennings/', contact: '', status: 'transition', photo: '', notes: '' },
-            { id: generateId(), name: 'Chuck Hwang', title: 'Vice President of Analytics & Insights - Family Care', company: 'Procter & Gamble', location: 'Cincinnati', linkedin: 'https://www.linkedin.com/in/chuckhwang/', contact: '', status: 'current', photo: 'headshots/chuck-hwang.jpg', notes: '' },
-            { id: generateId(), name: 'Jake Abel', title: 'Managing Director of International Marketing, Global Marketing Enablement, Media', company: 'Delta Airlines', location: 'Atlanta', linkedin: 'https://www.linkedin.com/in/jakeabel/', contact: '', status: 'transition', photo: '', notes: '' },
-            { id: generateId(), name: 'Julian Lopez', title: 'AVP of Member & Market Insights', company: 'USAA', location: 'San Antonio', linkedin: 'https://www.linkedin.com/in/julianlo1/', contact: '', status: 'transition', photo: '', notes: '' },
-            { id: generateId(), name: "Katie O'Neill", title: 'Brand Director', company: 'General Mills', location: 'Minneapolis', linkedin: 'https://www.linkedin.com/in/katieoneillmba/', contact: '', status: 'current', photo: '', notes: '' },
-            { id: generateId(), name: 'Ken Nelson', title: 'Managing Director', company: 'Deloitte', location: 'New Jersey', linkedin: 'https://www.linkedin.com/in/ksn123/', contact: '', status: 'current', photo: '', notes: '' },
-            { id: generateId(), name: 'Kyle Papanikolas', title: 'Senior Director - US Strategic Insights', company: "McDonald's", location: 'Chicago', linkedin: 'https://www.linkedin.com/in/kyle-papanikolas-700b2b6/', contact: '', status: 'current', photo: '', notes: '' },
-            { id: generateId(), name: 'Kyle Gore', title: 'Vice President/GM - PepsiCo Direct Businesses', company: 'PepsiCo', location: 'Dallas', linkedin: 'https://www.linkedin.com/in/kyle-gore-a3b8ba1/', contact: '', status: 'current', photo: '', notes: '' },
-            { id: generateId(), name: 'Lisa Gudding', title: 'President', company: 'Ipsos', location: 'Minneapolis', linkedin: 'https://www.linkedin.com/in/lisagudding/', contact: '', status: 'current', photo: '', notes: '' },
-            { id: generateId(), name: 'Nicole Thomas', title: 'Human Insights Director, CX, Personalization and Big Data', company: 'The Clorox Company', location: 'Atlanta', linkedin: 'https://www.linkedin.com/in/nicolethomas/', contact: '', status: 'current', photo: 'headshots/nicole-thomas.jpg', notes: '' },
-            { id: generateId(), name: 'Paul Metz', title: 'Chief Executive Officer', company: 'C+R Research', location: 'Chicago', linkedin: 'https://www.linkedin.com/in/paul-metz-a370221/', contact: '', status: 'current', photo: '', notes: '' },
-            { id: generateId(), name: 'Polly Baur', title: 'Senior Vice President, Marketing & Strategy', company: 'Charter Next Generation', location: 'Chicago', linkedin: 'https://www.linkedin.com/in/polly-baur/', contact: '', status: 'current', photo: 'headshots/polly-baur.jpg', notes: '' },
-            { id: generateId(), name: 'Sarah Jones', title: 'Head of Brand, Product Marketing and Insights - Grocery Private Brands', company: 'Amazon', location: 'Washington', linkedin: 'https://www.linkedin.com/in/sarahkorbeljones/', contact: '', status: 'current', photo: '', notes: '' },
-            { id: generateId(), name: 'Tanya Schooley', title: 'Director Marketing Insights, Oncology', company: 'AbbVie', location: 'Chicago', linkedin: 'https://www.linkedin.com/in/tanya-schooley-a358b84/', contact: '', status: 'current', photo: 'headshots/tanya-schooley.jpg', notes: '' },
-            { id: generateId(), name: 'Tom Schar', title: 'Senior Director, Marketing & Commerce Cloud', company: 'Salesforce', location: 'San Francisco', linkedin: 'https://www.linkedin.com/in/tom-schar-80356319/', contact: '', status: 'current', photo: '', notes: '' },
-            { id: generateId(), name: 'Kajoli Tankha', title: 'Senior Director, Consumer & Brand Insights', company: 'Microsoft', location: 'Seattle', linkedin: 'https://www.linkedin.com/in/kajoli-tankha/', contact: '', status: 'current', photo: 'headshots/kajoli-tankha.jpg', notes: '' },
-            { id: generateId(), name: 'Aaron Gretebeck', title: 'Vice President of Marketing, Baby & Child Care', company: 'Kimberly-Clark', location: 'Neenah', linkedin: 'https://www.linkedin.com/in/aaron-gretebeck-9b006422/', contact: '', status: 'current', photo: 'headshots/aaron-gretebeck.jpg', notes: '' },
-            { id: generateId(), name: 'Amanda Boyle', title: 'Global Head of Marketing Operations and Technologies', company: 'SC Johnson', location: 'Racine', linkedin: '', contact: '', status: 'current', photo: 'headshots/amanda-boyle.jpg', notes: '' },
-            { id: generateId(), name: 'Deborah Powsner', title: 'Director, Content Strategy & Engagement', company: 'Google', location: 'New York', linkedin: '', contact: '', status: 'current', photo: '', notes: '' },
+            { id: generateId(), name: 'Adam Davis', title: 'Senior Divisional Merchandise Manager, Home Care', company: 'Target Corporation', location: 'Minneapolis', linkedin: 'https://www.linkedin.com/in/adam-davis-2975215/', contact: 'Alan Stoffer', status: 'transition', industry: 'retail', photo: '', notes: '' },
+            { id: generateId(), name: 'Barry Jennings', title: 'Director, Cloud & Enterprise Insights', company: 'Microsoft', location: 'Atlanta', linkedin: 'https://www.linkedin.com/in/barry-jennings/', contact: '', status: 'transition', industry: 'tech', photo: '', notes: '' },
+            { id: generateId(), name: 'Chuck Hwang', title: 'Vice President of Analytics & Insights - Family Care', company: 'Procter & Gamble', location: 'Cincinnati', linkedin: 'https://www.linkedin.com/in/chuckhwang/', contact: '', status: 'current', industry: 'cpg', photo: 'headshots/chuck-hwang.jpg', notes: '' },
+            { id: generateId(), name: 'Jake Abel', title: 'Managing Director of International Marketing, Global Marketing Enablement, Media', company: 'Delta Airlines', location: 'Atlanta', linkedin: 'https://www.linkedin.com/in/jakeabel/', contact: '', status: 'transition', industry: 'services', photo: '', notes: '' },
+            { id: generateId(), name: 'Julian Lopez', title: 'AVP of Member & Market Insights', company: 'USAA', location: 'San Antonio', linkedin: 'https://www.linkedin.com/in/julianlo1/', contact: '', status: 'transition', industry: 'services', photo: '', notes: '' },
+            { id: generateId(), name: "Katie O'Neill", title: 'Brand Director', company: 'General Mills', location: 'Minneapolis', linkedin: 'https://www.linkedin.com/in/katieoneillmba/', contact: '', status: 'current', industry: 'cpg', photo: '', notes: '' },
+            { id: generateId(), name: 'Ken Nelson', title: 'Managing Director', company: 'Deloitte', location: 'New Jersey', linkedin: 'https://www.linkedin.com/in/ksn123/', contact: '', status: 'current', industry: 'services', photo: '', notes: '' },
+            { id: generateId(), name: 'Kyle Papanikolas', title: 'Senior Director - US Strategic Insights', company: "McDonald's", location: 'Chicago', linkedin: 'https://www.linkedin.com/in/kyle-papanikolas-700b2b6/', contact: '', status: 'current', industry: 'services', photo: '', notes: '' },
+            { id: generateId(), name: 'Kyle Gore', title: 'Vice President/GM - PepsiCo Direct Businesses', company: 'PepsiCo', location: 'Dallas', linkedin: 'https://www.linkedin.com/in/kyle-gore-a3b8ba1/', contact: '', status: 'current', industry: 'cpg', photo: '', notes: '' },
+            { id: generateId(), name: 'Lisa Gudding', title: 'President', company: 'Ipsos', location: 'Minneapolis', linkedin: 'https://www.linkedin.com/in/lisagudding/', contact: '', status: 'current', industry: 'services', photo: '', notes: '' },
+            { id: generateId(), name: 'Nicole Thomas', title: 'Human Insights Director, CX, Personalization and Big Data', company: 'The Clorox Company', location: 'Atlanta', linkedin: 'https://www.linkedin.com/in/nicolethomas/', contact: '', status: 'current', industry: 'cpg', photo: 'headshots/nicole-thomas.jpg', notes: '' },
+            { id: generateId(), name: 'Paul Metz', title: 'Chief Executive Officer', company: 'C+R Research', location: 'Chicago', linkedin: 'https://www.linkedin.com/in/paul-metz-a370221/', contact: '', status: 'current', industry: 'services', photo: '', notes: '' },
+            { id: generateId(), name: 'Polly Baur', title: 'Senior Vice President, Marketing & Strategy', company: 'Charter Next Generation', location: 'Chicago', linkedin: 'https://www.linkedin.com/in/polly-baur/', contact: '', status: 'current', industry: 'cpg', photo: 'headshots/polly-baur.jpg', notes: '' },
+            { id: generateId(), name: 'Sarah Jones', title: 'Head of Brand, Product Marketing and Insights - Grocery Private Brands', company: 'Amazon', location: 'Washington', linkedin: 'https://www.linkedin.com/in/sarahkorbeljones/', contact: '', status: 'current', industry: 'tech', photo: '', notes: '' },
+            { id: generateId(), name: 'Tanya Schooley', title: 'Director Marketing Insights, Oncology', company: 'AbbVie', location: 'Chicago', linkedin: 'https://www.linkedin.com/in/tanya-schooley-a358b84/', contact: '', status: 'current', industry: 'healthcare', photo: 'headshots/tanya-schooley.jpg', notes: '' },
+            { id: generateId(), name: 'Tom Schar', title: 'Senior Director, Marketing & Commerce Cloud', company: 'Salesforce', location: 'San Francisco', linkedin: 'https://www.linkedin.com/in/tom-schar-80356319/', contact: '', status: 'current', industry: 'tech', photo: '', notes: '' },
+            { id: generateId(), name: 'Kajoli Tankha', title: 'Senior Director, Consumer & Brand Insights', company: 'Microsoft', location: 'Seattle', linkedin: 'https://www.linkedin.com/in/kajoli-tankha/', contact: '', status: 'current', industry: 'tech', photo: 'headshots/kajoli-tankha.jpg', notes: '' },
+            { id: generateId(), name: 'Aaron Gretebeck', title: 'Vice President of Marketing, Baby & Child Care', company: 'Kimberly-Clark', location: 'Neenah', linkedin: 'https://www.linkedin.com/in/aaron-gretebeck-9b006422/', contact: '', status: 'current', industry: 'cpg', photo: 'headshots/aaron-gretebeck.jpg', notes: '' },
+            { id: generateId(), name: 'Amanda Boyle', title: 'Global Head of Marketing Operations and Technologies', company: 'SC Johnson', location: 'Racine', linkedin: '', contact: '', status: 'current', industry: 'cpg', photo: 'headshots/amanda-boyle.jpg', notes: '' },
+            { id: generateId(), name: 'Deborah Powsner', title: 'Director, Content Strategy & Engagement', company: 'Google', location: 'New York', linkedin: '', contact: '', status: 'current', industry: 'tech', photo: '', notes: '' },
             // Former members (rolled off)
-            { id: generateId(), name: 'Christie Crouch', title: 'Vice President and General Manager', company: 'Conagra Brands', location: 'Cincinnati', linkedin: '', contact: '', status: 'former', notes: '' },
-            { id: generateId(), name: 'Benjamin Lawnicki', title: 'Vice President of Marketing, Thinx', company: 'Kimberly-Clark', location: 'Chicago', linkedin: 'https://www.linkedin.com/in/benjamin-lawnicki/', contact: '', status: 'former', notes: '' },
+            { id: generateId(), name: 'Christie Crouch', title: 'Vice President and General Manager', company: 'Conagra Brands', location: 'Cincinnati', linkedin: '', contact: '', status: 'former', industry: 'cpg', notes: '' },
+            { id: generateId(), name: 'Benjamin Lawnicki', title: 'Vice President of Marketing, Thinx', company: 'Kimberly-Clark', location: 'Chicago', linkedin: 'https://www.linkedin.com/in/benjamin-lawnicki/', contact: '', status: 'former', industry: 'cpg', notes: '' },
         ]
     };
 }
@@ -1288,6 +1547,7 @@ function openRosterAddModal(status) {
     document.getElementById('rosterInputPhoto').value = '';
     document.getElementById('rosterInputContact').value = '';
     document.getElementById('rosterInputStatus').value = status || 'current';
+    document.getElementById('rosterInputIndustry').value = '';
     document.getElementById('rosterInputNotes').value = '';
     document.getElementById('rosterModal').classList.add('active');
     setTimeout(() => document.getElementById('rosterInputName').focus(), 100);
@@ -1306,6 +1566,7 @@ function openRosterEditModal(id) {
     document.getElementById('rosterInputPhoto').value = member.photo || '';
     document.getElementById('rosterInputContact').value = member.contact || '';
     document.getElementById('rosterInputStatus').value = member.status;
+    document.getElementById('rosterInputIndustry').value = member.industry || '';
     document.getElementById('rosterInputNotes').value = member.notes || '';
     document.getElementById('rosterModal').classList.add('active');
 }
@@ -1327,6 +1588,7 @@ function saveRosterMember() {
         photo: document.getElementById('rosterInputPhoto').value.trim(),
         contact: document.getElementById('rosterInputContact').value.trim(),
         status: document.getElementById('rosterInputStatus').value,
+        industry: document.getElementById('rosterInputIndustry').value,
         notes: document.getElementById('rosterInputNotes').value.trim(),
     };
 
@@ -1356,12 +1618,272 @@ function filterRoster() {
     renderRosterBoard();
 }
 
+// =============================================
+// INDUSTRY VIEW (read-only derived view of roster)
+// =============================================
+function renderIndustryView() {
+    renderIndustryBoard();
+    renderIndustryStats();
+}
+
+function renderIndustryBoard() {
+    const board = document.getElementById('industryBoard');
+    const searchTerm = document.getElementById('industrySearchInput').value.toLowerCase();
+    board.innerHTML = '';
+
+    INDUSTRIES.forEach(ind => {
+        const col = document.createElement('div');
+        col.className = `industry-column industry-col-${ind.id}`;
+
+        const members = rosterData.members.filter(m => m.industry === ind.id);
+        const filtered = members.filter(m =>
+            !searchTerm ||
+            m.name.toLowerCase().includes(searchTerm) ||
+            (m.title || '').toLowerCase().includes(searchTerm) ||
+            (m.company || '').toLowerCase().includes(searchTerm)
+        );
+
+        col.innerHTML = `
+            <div class="roster-column-header">
+                <div>
+                    <h2>${ind.label}</h2>
+                </div>
+                <span class="badge">${members.length}</span>
+            </div>
+            <div class="roster-column-body">
+                ${filtered.map(m => renderIndustryCard(m)).join('')}
+            </div>
+        `;
+        board.appendChild(col);
+    });
+}
+
+function renderIndustryCard(member) {
+    const linkedinHtml = member.linkedin
+        ? `<a href="${escapeHtml(member.linkedin)}" target="_blank" rel="noopener" class="linkedin-icon" title="View LinkedIn Profile"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 72 72"><rect width="72" height="72" rx="8" fill="#0a66c2"/><path d="M20.1 29.2h6.5v20.9h-6.5zM23.3 18.5c2.1 0 3.8 1.7 3.8 3.8s-1.7 3.8-3.8 3.8-3.8-1.7-3.8-3.8 1.7-3.8 3.8-3.8M30.4 29.2h6.2v2.9h.1c.9-1.6 3-3.3 6.1-3.3 6.5 0 7.7 4.3 7.7 9.9v11.4h-6.5V40.1c0-2.4 0-5.5-3.3-5.5s-3.9 2.6-3.9 5.3v10.2h-6.5V29.2z" fill="#fff"/></svg></a>`
+        : '';
+    const initials = getInitials(member.name);
+    const color = getAvatarColor(member.name);
+    const avatarInner = member.photo
+        ? `<img src="${escapeHtml(member.photo)}" alt="${escapeHtml(member.name)}">`
+        : initials;
+    const statusObj = ROSTER_STATUSES.find(s => s.id === member.status);
+    const statusLabel = statusObj ? statusObj.label : member.status;
+    const statusColor = ROSTER_COLORS[member.status] || '#6b7280';
+
+    return `
+        <div class="industry-card">
+            <div class="card-layout">
+                <div class="avatar avatar-lg" style="background:${color}">${avatarInner}</div>
+                <div class="card-info">
+                    <div class="r-name">
+                        <span>${escapeHtml(member.name)}</span>
+                        ${linkedinHtml}
+                    </div>
+                    ${member.title ? `<div class="r-title">${escapeHtml(member.title)}</div>` : ''}
+                    ${member.company ? `<div class="r-company">${escapeHtml(member.company)}</div>` : ''}
+                    <div style="margin-top:4px">
+                        <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:${statusColor};font-weight:600">
+                            <span style="width:6px;height:6px;border-radius:50%;background:${statusColor};display:inline-block"></span>
+                            ${escapeHtml(statusLabel)}
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    `;
+}
+
+function renderIndustryStats() {
+    const bar = document.getElementById('industryStatsBar');
+    const total = rosterData.members.length;
+    let html = `<div class="stat"><span class="count">${total}</span> Total Board Members</div>`;
+    html += INDUSTRIES.map(ind => {
+        const count = rosterData.members.filter(m => m.industry === ind.id).length;
+        return `<div class="stat">
+            <span class="dot" style="background:${ind.color}"></span>
+            ${ind.label}: <span class="count">${count}</span>
+        </div>`;
+    }).join('');
+    const unassigned = rosterData.members.filter(m => !m.industry || !INDUSTRIES.find(i => i.id === m.industry)).length;
+    if (unassigned > 0) {
+        html += `<div class="stat"><span class="dot" style="background:#d1d5db"></span>Unassigned: <span class="count">${unassigned}</span></div>`;
+    }
+    bar.innerHTML = html;
+}
+
+function filterIndustry() {
+    renderIndustryBoard();
+}
+
+// =============================================
+// TARGET COMPANIES DATA & LOGIC
+// =============================================
+const TARGETS_STORAGE_KEY = 'mli_eab_targets';
+
+function loadTargetsData() {
+    const stored = localStorage.getItem(TARGETS_STORAGE_KEY);
+    if (stored) return JSON.parse(stored);
+    return getDefaultTargetsData();
+}
+
+function saveTargetsData(d) {
+    localStorage.setItem(TARGETS_STORAGE_KEY, JSON.stringify(d));
+}
+
+function getDefaultTargetsData() {
+    return {
+        companies: [
+            { id: generateId(), name: 'Adobe', domain: 'adobe.com', industry: 'tech', notes: '' },
+            { id: generateId(), name: 'Meta', domain: 'meta.com', industry: 'tech', notes: '' },
+            { id: generateId(), name: 'Google', domain: 'google.com', industry: 'tech', notes: '' },
+            { id: generateId(), name: 'Ogilvy', domain: 'ogilvy.com', industry: 'services', notes: '' },
+            { id: generateId(), name: 'NIQ', domain: 'nielseniq.com', industry: 'services', notes: '' },
+            { id: generateId(), name: 'American Family Insurance', domain: 'amfam.com', industry: 'services', notes: '' },
+            { id: generateId(), name: 'Abbott', domain: 'abbott.com', industry: 'healthcare', notes: '' },
+            { id: generateId(), name: 'Eli Lilly', domain: 'lilly.com', industry: 'healthcare', notes: '' },
+        ]
+    };
+}
+
+let targetsData = loadTargetsData();
+
+function renderTargets() {
+    renderTargetsBoard();
+    renderTargetsStats();
+}
+
+function renderTargetsBoard() {
+    const board = document.getElementById('targetsBoard');
+    board.innerHTML = '';
+
+    INDUSTRIES.forEach(ind => {
+        const col = document.createElement('div');
+        col.className = `targets-column targets-col-${ind.id}`;
+
+        const companies = targetsData.companies.filter(c => c.industry === ind.id);
+
+        col.innerHTML = `
+            <div class="roster-column-header">
+                <div>
+                    <h2>${ind.label}</h2>
+                </div>
+                <span class="badge">${companies.length}</span>
+            </div>
+            <div class="roster-column-body">
+                ${companies.map(c => renderTargetCard(c)).join('')}
+                <button class="add-roster-btn" onclick="openTargetAddModal('${ind.id}')">+ Add company</button>
+            </div>
+        `;
+        board.appendChild(col);
+    });
+}
+
+function renderTargetCard(company) {
+    const logoUrl = company.domain ? `https://logo.clearbit.com/${company.domain}` : '';
+    const fallbackInitial = company.name.charAt(0);
+
+    return `
+        <div class="target-card">
+            <div class="card-actions">
+                <button onclick="openTargetEditModal('${company.id}')" title="Edit">&#9998;</button>
+                <button class="delete" onclick="deleteTargetCompany('${company.id}')" title="Delete">&times;</button>
+            </div>
+            <div class="target-logo">
+                ${logoUrl
+                    ? `<img src="${escapeHtml(logoUrl)}" alt="${escapeHtml(company.name)}" onerror="this.style.display='none';this.nextElementSibling.style.display='flex'">
+                       <span class="logo-fallback" style="display:none">${escapeHtml(fallbackInitial)}</span>`
+                    : `<span class="logo-fallback">${escapeHtml(fallbackInitial)}</span>`
+                }
+            </div>
+            <div class="target-name">${escapeHtml(company.name)}</div>
+            ${company.domain ? `<div class="target-domain">${escapeHtml(company.domain)}</div>` : ''}
+            ${company.notes ? `<div class="notes" style="margin-top:6px;font-size:12px;color:#9ca3af;font-style:italic">${escapeHtml(company.notes)}</div>` : ''}
+        </div>
+    `;
+}
+
+function renderTargetsStats() {
+    const bar = document.getElementById('targetsStatsBar');
+    const total = targetsData.companies.length;
+    bar.innerHTML = `<div class="stat"><span class="count">${total}</span> Target Companies</div>` +
+        INDUSTRIES.map(ind => {
+            const count = targetsData.companies.filter(c => c.industry === ind.id).length;
+            return `<div class="stat">
+                <span class="dot" style="background:${ind.color}"></span>
+                ${ind.label}: <span class="count">${count}</span>
+            </div>`;
+        }).join('');
+}
+
+// Target Company Modal
+function openTargetAddModal(industry) {
+    document.getElementById('targetModalTitle').textContent = 'Add Target Company';
+    document.getElementById('targetEditId').value = '';
+    document.getElementById('targetInputName').value = '';
+    document.getElementById('targetInputDomain').value = '';
+    document.getElementById('targetInputIndustry').value = industry || 'tech';
+    document.getElementById('targetInputNotes').value = '';
+    document.getElementById('targetModal').classList.add('active');
+    setTimeout(() => document.getElementById('targetInputName').focus(), 100);
+}
+
+function openTargetEditModal(id) {
+    const company = targetsData.companies.find(c => c.id === id);
+    if (!company) return;
+    document.getElementById('targetModalTitle').textContent = 'Edit Target Company';
+    document.getElementById('targetEditId').value = id;
+    document.getElementById('targetInputName').value = company.name;
+    document.getElementById('targetInputDomain').value = company.domain || '';
+    document.getElementById('targetInputIndustry').value = company.industry;
+    document.getElementById('targetInputNotes').value = company.notes || '';
+    document.getElementById('targetModal').classList.add('active');
+}
+
+function closeTargetModal() {
+    document.getElementById('targetModal').classList.remove('active');
+}
+
+function saveTargetCompany() {
+    const name = document.getElementById('targetInputName').value.trim();
+    if (!name) { alert('Company name is required'); return; }
+    const editId = document.getElementById('targetEditId').value;
+    const companyData = {
+        name,
+        domain: document.getElementById('targetInputDomain').value.trim(),
+        industry: document.getElementById('targetInputIndustry').value,
+        notes: document.getElementById('targetInputNotes').value.trim(),
+    };
+
+    if (editId) {
+        const company = targetsData.companies.find(c => c.id === editId);
+        if (company) Object.assign(company, companyData);
+    } else {
+        companyData.id = generateId();
+        targetsData.companies.push(companyData);
+    }
+
+    saveTargetsData(targetsData);
+    closeTargetModal();
+    renderTargets();
+}
+
+function deleteTargetCompany(id) {
+    const company = targetsData.companies.find(c => c.id === id);
+    if (!company) return;
+    if (!confirm(`Remove ${company.name} from target companies?`)) return;
+    targetsData.companies = targetsData.companies.filter(c => c.id !== id);
+    saveTargetsData(targetsData);
+    renderTargets();
+}
+
 // Export/Import now includes roster data
 const _origExport = exportData;
 exportData = function() {
     const combined = {
         pipeline: data,
         roster: rosterData,
+        targets: targetsData,
     };
     const json = JSON.stringify(combined, null, 2);
     const blob = new Blob([json], { type: 'application/json' });
@@ -1381,8 +1903,10 @@ doImport = function() {
         if (imported.pipeline && imported.roster) {
             data = imported.pipeline;
             rosterData = imported.roster;
+            if (imported.targets) targetsData = imported.targets;
             saveData(data);
             saveRosterData(rosterData);
+            saveTargetsData(targetsData);
         } else if (imported.people && Array.isArray(imported.people)) {
             data = imported;
             saveData(data);
@@ -1393,6 +1917,8 @@ doImport = function() {
         closeImportModal();
         render();
         if (activeTab === 'roster') renderRoster();
+        if (activeTab === 'industry') renderIndustryView();
+        if (activeTab === 'targets') renderTargets();
     } catch (e) {
         alert('Invalid JSON: ' + e.message);
     }
@@ -1403,10 +1929,14 @@ function resetAllData() {
     if (!confirm('Reset all data to defaults? This will clear any changes you\'ve made and reload the original data with LinkedIn links and headshots.')) return;
     localStorage.removeItem(STORAGE_KEY);
     localStorage.removeItem(ROSTER_STORAGE_KEY);
+    localStorage.removeItem(TARGETS_STORAGE_KEY);
     data = getDefaultData();
     rosterData = getDefaultRosterData();
+    targetsData = getDefaultTargetsData();
     render();
     if (activeTab === 'roster') renderRoster();
+    if (activeTab === 'industry') renderIndustryView();
+    if (activeTab === 'targets') renderTargets();
 }
 
 // Keyboard shortcuts
@@ -1414,6 +1944,7 @@ document.addEventListener('keydown', e => {
     if (e.key === 'Escape') {
         closeModal();
         closeRosterModal();
+        closeTargetModal();
         closeImportModal();
     }
 });
