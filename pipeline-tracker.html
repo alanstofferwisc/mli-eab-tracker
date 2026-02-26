@@ -1681,14 +1681,14 @@ function renderIndustryCard(member) {
     return `
         <div class="industry-card">
             <div class="card-layout">
-                <div class="avatar avatar-lg" style="background:${color}">${avatarInner}</div>
+                <div class="avatar" style="background:${color}">${avatarInner}</div>
                 <div class="card-info">
-                    <div class="r-name">
+                    <div class="name">
                         <span>${escapeHtml(member.name)}</span>
                         ${linkedinHtml}
                     </div>
-                    ${member.title ? `<div class="r-title">${escapeHtml(member.title)}</div>` : ''}
-                    ${member.company ? `<div class="r-company">${escapeHtml(member.company)}</div>` : ''}
+                    ${member.title ? `<div class="title">${escapeHtml(member.title)}</div>` : ''}
+                    ${member.company ? `<div class="company">${escapeHtml(member.company)}</div>` : ''}
                     <div style="margin-top:4px">
                         <span style="display:inline-flex;align-items:center;gap:4px;font-size:11px;color:${statusColor};font-weight:600">
                             <span style="width:6px;height:6px;border-radius:50%;background:${statusColor};display:inline-block"></span>
