@@ -1787,7 +1787,7 @@ function renderTargetsBoard() {
 }
 
 function renderTargetCard(company) {
-    const logoUrl = company.domain ? `https://logo.clearbit.com/${company.domain}` : '';
+    const logoUrl = company.domain ? `https://api.companyenrich.com/logo/${company.domain}` : '';
     const fallbackInitial = company.name.charAt(0);
 
     return `
